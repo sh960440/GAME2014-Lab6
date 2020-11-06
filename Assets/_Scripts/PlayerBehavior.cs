@@ -11,6 +11,9 @@ public class PlayerBehavior : MonoBehaviour
     public float jumpForce;
     public float maximumVelocityX;
     public bool isGrounded;
+    public bool isJumping;
+    public Transform spawnPoint;
+
     private Rigidbody2D rigidbody;
     private SpriteRenderer spriteRenderer;
     private Animator animator;
@@ -32,30 +35,34 @@ public class PlayerBehavior : MonoBehaviour
     private void _Move()
     {
         if (isGrounded)
-        {
+        {    
             if (jojstick.Horizontal > JoystickHorizontalSensitivity)
-        {
-            rigidbody.AddForce(Vector2.right * horizontalForce * Time.deltaTime);
-            spriteRenderer.flipX = false;
-            animator.SetInteger("AnimState", 1);
-        }
+            {
+                rigidbody.AddForce(Vector2.right * horizontalForce * Time.deltaTime);
+                spriteRenderer.flipX = false;
+                animator.SetInteger("AnimState", 1);
+            }
+            else if (jojstick.Horizontal < -JoystickHorizontalSensitivity)
+            {
+                rigidbody.AddForce(Vector2.left * horizontalForce * Time.deltaTime);
+                spriteRenderer.flipX = true;
+                animator.SetInteger("AnimState", 1);
+            }
+            else if (!isJumping)
+            {
+                animator.SetInteger("AnimState", 0);
+            }
 
-        else if (jojstick.Horizontal < -JoystickHorizontalSensitivity)
-        {
-            rigidbody.AddForce(Vector2.left * horizontalForce * Time.deltaTime);
-            spriteRenderer.flipX = true;
-            animator.SetInteger("AnimState", 1);
-        }
-        else if (jojstick.Vertical > JoystickVerticalSensitivity)
-        {
-            rigidbody.AddForce(Vector2.up * jumpForce * Time.deltaTime);
-            animator.SetInteger("AnimState", 2);
-        }
-
-        else
-        {
-            animator.SetInteger("AnimState", 0);
-        }
+            if (jojstick.Vertical > JoystickVerticalSensitivity && !isJumping)
+            {
+                rigidbody.AddForce(Vector2.up * jumpForce * Time.deltaTime);
+                animator.SetInteger("AnimState", 2);
+                isJumping = true;
+            }
+            else
+            {
+                isJumping = false;
+            }
         }
     }
 
@@ -67,5 +74,13 @@ public class PlayerBehavior : MonoBehaviour
     private void OnCollisionExit2D(Collision2D other)
     {
         isGrounded = false;
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.gameObject.CompareTag("DeathPlane"))
+        {
+            transform.position = spawnPoint.position;
+        }
     }
 }
